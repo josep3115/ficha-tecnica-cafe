@@ -2,7 +2,7 @@
 <html lang="es" class="dark h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bitácora del Catador - Ficha Técnica & QR</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -33,7 +33,6 @@
     <!-- QRCode.js library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        /* Custom scrollbar for dark UI */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -49,12 +48,10 @@
             background: #3f3f46;
         }
         
-        /* Smooth transitions */
         .transition-all-200 {
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Pulse glow animation for QR code update */
         @keyframes qrPulse {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(229, 169, 60, 0.4); }
             50% { transform: scale(1.03); box-shadow: 0 0 15px 5px rgba(229, 169, 60, 0.6); }
@@ -66,10 +63,10 @@
         }
     </style>
 </head>
-<body class="bg-black text-gray-100 font-sans min-h-full flex flex-col antialiased selection:bg-amber-500 selection:text-black">
+<body class="bg-[#0b0b0d] sm:bg-black text-gray-100 font-sans min-h-[100dvh] flex flex-col antialiased selection:bg-amber-500 selection:text-black">
 
-    <!-- Top Navigation Bar -->
-    <header class="border-b border-neutral-800 bg-neutral-950/80 backdrop-blur sticky top-0 z-40 px-4 py-3">
+    <!-- Top Navigation Bar (Solo Administrador) -->
+    <header id="adminHeader" class="hidden border-b border-neutral-800 bg-neutral-950/80 backdrop-blur sticky top-0 z-40 px-4 py-3">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="p-2 bg-amber-500/10 rounded-lg text-amber-500 border border-amber-500/20">
@@ -85,21 +82,24 @@
             <div class="flex items-center gap-2">
                 <button id="btnReset" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-neutral-300 hover:text-white bg-neutral-900 hover:bg-neutral-800 border border-neutral-700/60 rounded-lg transition-colors">
                     <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
-                    <span>Restablecer</span>
+                    <span class="hidden sm:inline">Restablecer</span>
                 </button>
                 <button id="btnShare" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-black bg-amber-500 hover:bg-amber-400 font-semibold rounded-lg transition-colors shadow-lg shadow-amber-500/10">
                     <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
                     <span>Copiar Enlace</span>
+                </button>
+                <button id="btnLogout" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-400 hover:text-red-300 bg-red-950/30 hover:bg-red-950/60 border border-red-900/50 rounded-lg transition-colors" title="Cerrar sesión">
+                    <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
                 </button>
             </div>
         </div>
     </header>
 
     <!-- Main Workspace -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    <main id="mainWorkspace" class="flex-1 w-full mx-auto flex flex-col justify-between sm:justify-center items-center sm:p-6 lg:p-8">
         
-        <!-- LEFT COLUMN: Editor Form -->
-        <section class="lg:col-span-6 xl:col-span-7 space-y-6">
+        <!-- LEFT COLUMN: Editor Form (Solo Administrador) -->
+        <section id="adminEditor" class="hidden lg:col-span-6 xl:col-span-7 space-y-6 w-full p-4 sm:p-0">
             
             <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 md:p-6 shadow-xl">
                 <div class="flex items-center justify-between mb-5 border-b border-neutral-800 pb-3">
@@ -115,7 +115,6 @@
 
                 <form id="coffeeForm" class="space-y-4" onsubmit="event.preventDefault();">
                     
-                    <!-- Header Info -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Variedad / Nombre</label>
@@ -127,7 +126,6 @@
                         </div>
                     </div>
 
-                    <!-- Puntaje & Notas -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Puntaje SCA</label>
@@ -141,9 +139,7 @@
 
                     <div class="h-px bg-neutral-800/80 my-4"></div>
 
-                    <!-- Attribute Grid Editor -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Pair 1 -->
                         <div>
                             <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Proceso</label>
                             <input type="text" id="in_proceso" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="Natural">
@@ -153,7 +149,6 @@
                             <input type="text" id="in_rueda_p" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="Ácido Fermentado">
                         </div>
 
-                        <!-- Pair 2 -->
                         <div>
                             <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Rueda Secundaria</label>
                             <input type="text" id="in_rueda_s" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="Alcohol Fermentado">
@@ -163,7 +158,6 @@
                             <input type="text" id="in_residual" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="Cacao">
                         </div>
 
-                        <!-- Pair 3 -->
                         <div>
                             <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Sensación</label>
                             <input type="text" id="in_sensacion" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="Sedosa">
@@ -173,7 +167,6 @@
                             <input type="text" id="in_dulzor" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="10 / 15 · Medio">
                         </div>
 
-                        <!-- Pair 4 -->
                         <div>
                             <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Acidez (Escala SCA 0-15)</label>
                             <input type="text" id="in_acidez" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="11 / 15 · Alta">
@@ -183,7 +176,6 @@
                             <input type="text" id="in_intensidad" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="11 / 15 · Alta">
                         </div>
 
-                        <!-- Pair 5 -->
                         <div>
                             <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Origen</label>
                             <input type="text" id="in_origen" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="Acevedo, Huila">
@@ -193,7 +185,6 @@
                             <input type="text" id="in_altura" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="1700 msnm">
                         </div>
 
-                        <!-- Pair 6 -->
                         <div class="md:col-span-2">
                             <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Año de Tueste / Cosecha</label>
                             <input type="text" id="in_tueste" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="2026">
@@ -226,142 +217,133 @@
 
         </section>
 
-        <!-- RIGHT COLUMN: Real-Time Dark Mode Mobile Preview -->
-        <section class="lg:col-span-6 xl:col-span-5 flex justify-center sticky top-20">
+        <!-- RIGHT COLUMN: Ficha Técnica Responsiva -->
+        <section id="previewColumn" class="w-full flex-1 sm:flex-initial flex flex-col items-center justify-between sm:justify-center">
             
-            <!-- Mobile Frame -->
-            <div class="w-full max-w-[390px] bg-black rounded-[40px] p-3 border-4 border-neutral-800 shadow-2xl shadow-neutral-950/80 relative overflow-hidden flex flex-col min-h-[780px]">
+            <!-- Contenedor adaptable (Fluido en móvil público, tarjeta en escritorio, marco simulado en admin) -->
+            <div id="deviceFrame" class="w-full flex-1 sm:flex-initial sm:max-w-[440px] md:max-w-[480px] bg-[#0b0b0d] sm:rounded-[32px] sm:border sm:border-neutral-800/90 sm:shadow-2xl sm:shadow-black relative flex flex-col justify-between transition-all">
                 
-                <!-- Speaker Notch / Dynamic Island placeholder -->
-                <div class="w-32 h-4 bg-neutral-900 rounded-full mx-auto mb-2 shrink-0 flex items-center justify-center gap-2">
+                <!-- Speaker Notch (Visible solo en modo Admin) -->
+                <div id="deviceNotch" class="hidden w-32 h-4 bg-neutral-900 rounded-full mx-auto mb-2 shrink-0 items-center justify-center gap-2">
                     <div class="w-2 h-2 rounded-full bg-neutral-950"></div>
                     <div class="w-3 h-1 bg-neutral-800 rounded-full"></div>
                 </div>
 
-                <!-- Screen Inner Content (Exact Dark Replica) -->
-                <div class="flex-1 bg-[#0b0b0d] text-white rounded-[30px] p-5 flex flex-col justify-between overflow-y-auto relative font-sans border border-neutral-900/60">
+                <!-- Contenido Interno de la Ficha -->
+                <div id="deviceScreen" class="flex-1 bg-[#0b0b0d] text-white px-5 py-6 sm:p-7 md:p-8 sm:rounded-[32px] flex flex-col justify-between font-sans">
                     
-                    <div class="space-y-5">
+                    <div class="space-y-5 sm:space-y-6">
                         
-                        <!-- Header Status Bar Replica -->
-                        <div class="flex items-center justify-between text-[11px] text-neutral-400 font-mono tracking-wider">
-                            <span>9:53</span>
+                        <!-- Barra Superior -->
+                        <div class="flex items-center justify-between text-[11px] sm:text-xs text-neutral-400 font-mono tracking-wider">
+                            <span id="liveClock">9:53</span>
                             <span class="font-semibold text-neutral-300">BITÁCORA DEL CATADOR</span>
-                            <div class="flex items-center gap-1">
-                                <i data-lucide="wifi" class="w-3 h-3"></i>
-                                <i data-lucide="battery" class="w-3 h-3"></i>
+                            <div class="flex items-center gap-1.5 text-amber-500/80">
+                                <i data-lucide="coffee" class="w-3.5 h-3.5"></i>
                             </div>
                         </div>
 
-                        <!-- Title & Producer -->
-                        <div class="pt-2">
-                            <h2 id="view_name" class="text-4xl font-extrabold tracking-tight text-white font-sans">SL28</h2>
-                            <p id="view_producer" class="text-xs text-neutral-400 mt-1 font-medium">Wilmer Cuellar · Finca Las Brisas</p>
+                        <!-- Variedad y Productor -->
+                        <div class="pt-1 sm:pt-2">
+                            <h2 id="view_name" class="text-4xl sm:text-5xl font-extrabold tracking-tight text-white font-sans break-words">SL28</h2>
+                            <p id="view_producer" class="text-xs sm:text-sm text-neutral-400 mt-1.5 font-medium">Wilmer Cuellar · Finca Las Brisas</p>
                         </div>
 
-                        <!-- Divider line -->
                         <div class="h-px bg-neutral-900 w-full"></div>
 
-                        <!-- Big SCA Score -->
+                        <!-- Puntaje SCA -->
                         <div class="space-y-1">
                             <div class="flex items-baseline gap-3">
-                                <span id="view_score" class="text-5xl font-black tracking-tight text-white font-mono">88,00</span>
-                                <span class="text-[10px] tracking-widest text-neutral-400 font-bold uppercase">PUNTAJE SCA</span>
+                                <span id="view_score" class="text-5xl sm:text-6xl font-black tracking-tight text-white font-mono">88,00</span>
+                                <span class="text-[10px] sm:text-xs tracking-widest text-neutral-400 font-bold uppercase">PUNTAJE SCA</span>
                             </div>
-                            <p class="text-xs text-neutral-400">Excelente · 85 puntos o más en la escala SCA</p>
+                            <p class="text-xs sm:text-sm text-neutral-400">Excelente · 85 puntos o más en la escala SCA</p>
                         </div>
 
-                        <!-- Divider line -->
                         <div class="h-px bg-neutral-900 w-full"></div>
 
-                        <!-- Tasting Notes -->
+                        <!-- Notas de Cata -->
                         <div>
-                            <h3 id="view_notes" class="text-lg font-bold text-white tracking-wide">Avinado • Mora • Nibs de Cacao</h3>
+                            <h3 id="view_notes" class="text-lg sm:text-xl font-bold text-white tracking-wide leading-snug">Avinado • Mora • Nibs de Cacao</h3>
                         </div>
 
-                        <!-- 2-Column Attributes Grid -->
-                        <div class="grid grid-cols-2 gap-y-4 gap-x-3 text-xs pt-1">
+                        <!-- Cuadrícula de Atributos Responsiva -->
+                        <div class="grid grid-cols-2 gap-y-4 sm:gap-y-5 gap-x-4 text-xs pt-1">
                             
-                            <!-- Row 1 -->
                             <div>
-                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">PROCESO</span>
-                                <p id="view_proceso" class="text-white font-mono text-sm font-normal">Natural</p>
+                                <span class="block text-[9px] sm:text-[10px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">PROCESO</span>
+                                <p id="view_proceso" class="text-white font-mono text-sm sm:text-base font-normal break-words">Natural</p>
                             </div>
                             <div>
-                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">RUEDA · PRINCIPAL</span>
-                                <p id="view_rueda_p" class="text-white font-mono text-sm font-normal">Ácido Fermentado</p>
-                            </div>
-
-                            <!-- Row 2 -->
-                            <div>
-                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">RUEDA · SECUNDARIA</span>
-                                <p id="view_rueda_s" class="text-white font-mono text-sm font-normal">Alcohol Fermentado</p>
-                            </div>
-                            <div>
-                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">RESIDUAL</span>
-                                <p id="view_residual" class="text-white font-mono text-sm font-normal">Cacao</p>
+                                <span class="block text-[9px] sm:text-[10px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">RUEDA · PRINCIPAL</span>
+                                <p id="view_rueda_p" class="text-white font-mono text-sm sm:text-base font-normal break-words">Ácido Fermentado</p>
                             </div>
 
-                            <!-- Row 3 -->
                             <div>
-                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">SENSACIÓN</span>
-                                <p id="view_sensacion" class="text-white font-mono text-sm font-normal">Sedosa</p>
+                                <span class="block text-[9px] sm:text-[10px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">RUEDA · SECUNDARIA</span>
+                                <p id="view_rueda_s" class="text-white font-mono text-sm sm:text-base font-normal break-words">Alcohol Fermentado</p>
                             </div>
                             <div>
-                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">DULZOR</span>
-                                <p id="view_dulzor" class="text-white font-mono text-sm font-normal">10 / 15 · Medio</p>
-                            </div>
-
-                            <!-- Row 4 -->
-                            <div>
-                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">ACIDEZ</span>
-                                <p id="view_acidez" class="text-white font-mono text-sm font-normal">11 / 15 · Alta</p>
-                            </div>
-                            <div>
-                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">INTENSIDAD</span>
-                                <p id="view_intensidad" class="text-white font-mono text-sm font-normal">11 / 15 · Alta</p>
+                                <span class="block text-[9px] sm:text-[10px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">RESIDUAL</span>
+                                <p id="view_residual" class="text-white font-mono text-sm sm:text-base font-normal break-words">Cacao</p>
                             </div>
 
-                            <!-- Row 5 -->
                             <div>
-                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">ORIGEN</span>
-                                <p id="view_origen" class="text-white font-mono text-sm font-normal">Acevedo, Huila</p>
+                                <span class="block text-[9px] sm:text-[10px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">SENSACIÓN</span>
+                                <p id="view_sensacion" class="text-white font-mono text-sm sm:text-base font-normal break-words">Sedosa</p>
                             </div>
                             <div>
-                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">ALTURA</span>
-                                <p id="view_altura" class="text-white font-mono text-sm font-normal">1700 msnm</p>
+                                <span class="block text-[9px] sm:text-[10px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">DULZOR</span>
+                                <p id="view_dulzor" class="text-white font-mono text-sm sm:text-base font-normal break-words">10 / 15 · Medio</p>
                             </div>
 
-                            <!-- Row 6 -->
+                            <div>
+                                <span class="block text-[9px] sm:text-[10px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">ACIDEZ</span>
+                                <p id="view_acidez" class="text-white font-mono text-sm sm:text-base font-normal break-words">11 / 15 · Alta</p>
+                            </div>
+                            <div>
+                                <span class="block text-[9px] sm:text-[10px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">INTENSIDAD</span>
+                                <p id="view_intensidad" class="text-white font-mono text-sm sm:text-base font-normal break-words">11 / 15 · Alta</p>
+                            </div>
+
+                            <div>
+                                <span class="block text-[9px] sm:text-[10px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">ORIGEN</span>
+                                <p id="view_origen" class="text-white font-mono text-sm sm:text-base font-normal break-words">Acevedo, Huila</p>
+                            </div>
+                            <div>
+                                <span class="block text-[9px] sm:text-[10px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">ALTURA</span>
+                                <p id="view_altura" class="text-white font-mono text-sm sm:text-base font-normal break-words">1700 msnm</p>
+                            </div>
+
                             <div class="col-span-2">
-                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">TUESTE</span>
-                                <p id="view_tueste" class="text-white font-mono text-sm font-normal">2026</p>
+                                <span class="block text-[9px] sm:text-[10px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">TUESTE</span>
+                                <p id="view_tueste" class="text-white font-mono text-sm sm:text-base font-normal break-words">2026</p>
                             </div>
 
                         </div>
 
-                        <!-- Disclaimer Text -->
+                        <!-- Nota aclaratoria SCA -->
                         <div class="pt-2">
-                            <p class="text-[10px] text-neutral-500 leading-relaxed">
+                            <p class="text-[11px] sm:text-xs text-neutral-500 leading-relaxed">
                                 Dulzor, acidez e intensidad se miden de 0 a 15 en el formulario SCA. La intensidad describe el café; no mide su calidad.
                             </p>
                         </div>
 
                     </div>
 
-                    <!-- Bottom Floating Bar Replica -->
-                    <div class="mt-6 pt-3 border-t border-neutral-900 flex flex-col gap-3">
-                        <div class="flex items-center justify-between text-[10px] text-neutral-500 tracking-wider font-semibold">
+                    <!-- Pie de Ficha -->
+                    <div class="mt-8 pt-4 border-t border-neutral-900 flex flex-col gap-3">
+                        <div class="flex items-center justify-between text-[10px] sm:text-xs text-neutral-500 tracking-wider font-semibold">
                             <span>FORMULARIO DE CATA SCA</span>
-                            <div class="flex items-center gap-1 text-emerald-400 font-normal">
+                            <div class="flex items-center gap-1.5 text-emerald-400 font-normal">
                                 <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
                                 <span>WhatsApp</span>
                             </div>
                         </div>
 
                         <div class="relative flex items-center">
-                            <input type="text" placeholder="Agrega un comentario..." class="w-full bg-neutral-900/90 border border-neutral-800 rounded-full px-4 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-700" readonly>
-                            <button class="absolute right-2 p-1 bg-neutral-800 rounded-full text-neutral-400 hover:text-white">
+                            <input type="text" placeholder="Agrega un comentario..." class="w-full bg-neutral-900/90 border border-neutral-800 rounded-full px-4 py-2.5 text-xs sm:text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-700" readonly>
+                            <button class="absolute right-2 p-1.5 bg-neutral-800 rounded-full text-neutral-400 hover:text-white">
                                 <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
                             </button>
                         </div>
@@ -370,9 +352,55 @@
                 </div>
             </div>
 
+            <!-- Botón de acceso Administrador -->
+            <div id="adminAccessFooter" class="py-4 sm:mt-4 sm:py-0">
+                <button id="btnOpenLogin" class="flex items-center gap-1.5 text-xs text-neutral-600 hover:text-neutral-400 transition-colors py-1.5 px-3 rounded-full">
+                    <i data-lucide="lock" class="w-3 h-3"></i>
+                    <span>Administrador</span>
+                </button>
+            </div>
+
         </section>
 
     </main>
+
+    <!-- Modal de Inicio de Sesión Administrador -->
+    <div id="loginModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl space-y-5 relative">
+            <button id="btnCloseLogin" class="absolute top-4 right-4 text-neutral-500 hover:text-white transition-colors">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+            
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-amber-500/10 rounded-xl text-amber-500 border border-amber-500/20">
+                    <i data-lucide="shield-check" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-white">Acceso Administrador</h3>
+                    <p class="text-xs text-neutral-400">Ingresa tus credenciales para editar</p>
+                </div>
+            </div>
+
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Usuario</label>
+                    <input type="text" id="adminUser" autocomplete="username" required class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" placeholder="Usuario">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Contraseña</label>
+                    <input type="password" id="adminPass" autocomplete="current-password" required class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" placeholder="••••••••">
+                </div>
+                
+                <p id="loginError" class="hidden text-xs text-red-400 bg-red-950/40 border border-red-900/50 rounded-lg px-3 py-2">
+                    Usuario o contraseña incorrectos.
+                </p>
+
+                <button type="submit" class="w-full py-2.5 px-4 bg-amber-500 hover:bg-amber-400 text-black font-semibold text-sm rounded-lg transition-colors shadow-lg shadow-amber-500/10">
+                    Entrar al Panel
+                </button>
+            </form>
+        </div>
+    </div>
 
     <!-- Notification Toast -->
     <div id="toast" class="fixed bottom-5 right-5 bg-amber-500 text-black font-semibold text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 translate-y-20 opacity-0 transition-all duration-300 z-50">
@@ -382,7 +410,6 @@
 
     <!-- Application Script -->
     <script>
-        // State Keys corresponding to inputs and view elements
         const fields = [
             'name', 'producer', 'score', 'notes',
             'proceso', 'rueda_p', 'rueda_s', 'residual',
@@ -390,22 +417,135 @@
             'origen', 'altura', 'tueste'
         ];
 
-        let qrCodeObj = null;
+        const ADMIN_USER = 'cafeletour';
+        const ADMIN_PASS = 'Lucas.100';
 
-        // Initialize Lucide Icons
+        let isAdmin = sessionStorage.getItem('isAdminAuth') === 'true';
+        let qrCodeObj = null;
+        let eventsBound = false;
+
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
-            initQR();
+            updateClock();
+            setInterval(updateClock, 30000);
+            setupLoginModal();
             loadStateFromURL();
-            bindEvents();
+            applyAdminState();
         });
 
-        // Initialize QRCode library instance
+        // Sincroniza la hora local en la barra superior de la ficha
+        function updateClock() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const clockEl = document.getElementById('liveClock');
+            if (clockEl) clockEl.textContent = `${hours}:${minutes}`;
+        }
+
+        function setupLoginModal() {
+            const modal = document.getElementById('loginModal');
+            const btnOpen = document.getElementById('btnOpenLogin');
+            const btnClose = document.getElementById('btnCloseLogin');
+            const form = document.getElementById('loginForm');
+            const errorMsg = document.getElementById('loginError');
+
+            btnOpen.addEventListener('click', () => {
+                errorMsg.classList.add('hidden');
+                form.reset();
+                modal.classList.remove('hidden');
+                document.getElementById('adminUser').focus();
+            });
+
+            btnClose.addEventListener('click', () => {
+                modal.classList.add('hidden');
+            });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.add('hidden');
+            });
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const user = document.getElementById('adminUser').value.trim();
+                const pass = document.getElementById('adminPass').value;
+
+                if (user === ADMIN_USER && pass === ADMIN_PASS) {
+                    isAdmin = true;
+                    sessionStorage.setItem('isAdminAuth', 'true');
+                    modal.classList.add('hidden');
+                    applyAdminState();
+                    showToast('Modo administrador activado');
+                } else {
+                    errorMsg.classList.remove('hidden');
+                }
+            });
+
+            document.getElementById('btnLogout').addEventListener('click', () => {
+                isAdmin = false;
+                sessionStorage.removeItem('isAdminAuth');
+                applyAdminState();
+                showToast('Sesión cerrada');
+            });
+        }
+
+        // Adapta la estructura visual según sea vista pública o panel de administración
+        function applyAdminState() {
+            const header = document.getElementById('adminHeader');
+            const editor = document.getElementById('adminEditor');
+            const main = document.getElementById('mainWorkspace');
+            const preview = document.getElementById('previewColumn');
+            const accessFooter = document.getElementById('adminAccessFooter');
+            const deviceFrame = document.getElementById('deviceFrame');
+            const deviceNotch = document.getElementById('deviceNotch');
+            const deviceScreen = document.getElementById('deviceScreen');
+
+            if (isAdmin) {
+                header.classList.remove('hidden');
+                editor.classList.remove('hidden');
+                accessFooter.classList.add('hidden');
+
+                main.className = 'flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start';
+                preview.className = 'lg:col-span-6 xl:col-span-5 flex justify-center lg:sticky lg:top-20 w-full';
+                
+                // Simulación de marco móvil en modo editor
+                deviceFrame.className = 'w-full max-w-[390px] bg-black rounded-[40px] p-3 border-4 border-neutral-800 shadow-2xl shadow-neutral-950/80 relative overflow-hidden flex flex-col min-h-[760px]';
+                deviceNotch.classList.remove('hidden');
+                deviceNotch.classList.add('flex');
+                deviceScreen.className = 'flex-1 bg-[#0b0b0d] text-white rounded-[30px] p-5 flex flex-col justify-between overflow-y-auto relative font-sans border border-neutral-900/60';
+
+                if (!qrCodeObj) initQR();
+                if (!eventsBound) {
+                    bindEvents();
+                    eventsBound = true;
+                }
+                syncPreview();
+            } else {
+                header.classList.add('hidden');
+                editor.classList.add('hidden');
+                accessFooter.classList.remove('hidden');
+
+                // Vista pública limpia y adaptable a cualquier pantalla
+                main.className = 'flex-1 w-full mx-auto flex flex-col justify-between sm:justify-center items-center sm:p-6 lg:p-8';
+                preview.className = 'w-full flex-1 sm:flex-initial flex flex-col items-center justify-between sm:justify-center';
+                
+                deviceFrame.className = 'w-full flex-1 sm:flex-initial sm:max-w-[440px] md:max-w-[480px] bg-[#0b0b0d] sm:rounded-[32px] sm:border sm:border-neutral-800/90 sm:shadow-2xl sm:shadow-black relative flex flex-col justify-between transition-all';
+                deviceNotch.classList.add('hidden');
+                deviceNotch.classList.remove('flex');
+                deviceScreen.className = 'flex-1 bg-[#0b0b0d] text-white px-5 py-6 sm:p-7 md:p-8 sm:rounded-[32px] flex flex-col justify-between font-sans';
+            }
+        }
+
+        function getPublicURL() {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('admin');
+            return url.toString();
+        }
+
         function initQR() {
             const qrElement = document.getElementById("qrcode");
             qrElement.innerHTML = "";
             qrCodeObj = new QRCode(qrElement, {
-                text: window.location.href,
+                text: getPublicURL(),
                 width: 128,
                 height: 128,
                 colorDark: "#0e0e10",
@@ -414,7 +554,6 @@
             });
         }
 
-        // Read form inputs and sync to Mobile UI Preview
         function syncPreview() {
             const data = {};
 
@@ -428,14 +567,12 @@
                 data[field] = inputVal;
             });
 
-            // Update URL parameters dynamically without reloading page
-            updateURLParams(data);
-
-            // Trigger QR update
-            updateQRCode();
+            if (isAdmin) {
+                updateURLParams(data);
+                updateQRCode();
+            }
         }
 
-        // Update URL search parameters
         function updateURLParams(data) {
             const params = new URLSearchParams();
             Object.keys(data).forEach(key => {
@@ -447,29 +584,24 @@
             window.history.replaceState({}, '', newURL);
         }
 
-        // Update QR Code graphic and trigger animation
         function updateQRCode() {
             if (!qrCodeObj) return;
 
-            const currentURL = window.location.href;
+            const publicURL = getPublicURL();
             qrCodeObj.clear();
-            qrCodeObj.makeCode(currentURL);
+            qrCodeObj.makeCode(publicURL);
 
-            // Animate QR container to notify visual update
             const wrapper = document.getElementById('qrContainerWrapper');
             wrapper.classList.remove('qr-updated');
-            void wrapper.offsetWidth; // Trigger reflow
+            void wrapper.offsetWidth;
             wrapper.classList.add('qr-updated');
         }
 
-        // Load parameters from URL if present
         function loadStateFromURL() {
             const params = new URLSearchParams(window.location.search);
-            let hasParams = false;
 
             fields.forEach(field => {
                 if (params.has(field)) {
-                    hasParams = true;
                     const val = params.get(field);
                     const inputElem = document.getElementById(`in_${field}`);
                     if (inputElem) {
@@ -478,11 +610,9 @@
                 }
             });
 
-            // Initial Sync
             syncPreview();
         }
 
-        // Attach input listeners
         function bindEvents() {
             fields.forEach(field => {
                 const inputElem = document.getElementById(`in_${field}`);
@@ -491,7 +621,6 @@
                 }
             });
 
-            // Reset Button
             document.getElementById('btnReset').addEventListener('click', () => {
                 const defaultValues = {
                     name: 'SL28',
@@ -520,19 +649,22 @@
                 showToast('Valores restablecidos por defecto');
             });
 
-            // Share / Copy Link Button
             document.getElementById('btnShare').addEventListener('click', () => {
-                const dummy = document.createElement('input');
-                document.body.appendChild(dummy);
-                dummy.value = window.location.href;
-                dummy.select();
-                document.execCommand('copy');
-                document.body.removeChild(dummy);
+                const publicURL = getPublicURL();
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(publicURL);
+                } else {
+                    const dummy = document.createElement('input');
+                    document.body.appendChild(dummy);
+                    dummy.value = publicURL;
+                    dummy.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(dummy);
+                }
 
-                showToast('¡Enlace con esta ficha copiado!');
+                showToast('¡Enlace público copiado!');
             });
 
-            // Download QR code image
             document.getElementById('btnDownloadQR').addEventListener('click', () => {
                 const qrImage = document.querySelector('#qrcode img');
                 const canvas = document.querySelector('#qrcode canvas');
@@ -557,7 +689,6 @@
             });
         }
 
-        // Helper Toast Notification
         function showToast(msg) {
             const toast = document.getElementById('toast');
             const toastMsg = document.getElementById('toastMsg');
