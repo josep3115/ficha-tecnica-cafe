@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="es" class="dark h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitácora del Catador - Ficha Técnica & QR</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0e0e10',
+                        cardBg: '#161619',
+                        accentGold: '#e5a93c',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- QRCode.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        /* Custom scrollbar for dark UI */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0e0e10;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46;
+        }
+        
+        /* Smooth transitions */
+        .transition-all-200 {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Pulse glow animation for QR code update */
+        @keyframes qrPulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(229, 169, 60, 0.4); }
+            50% { transform: scale(1.03); box-shadow: 0 0 15px 5px rgba(229, 169, 60, 0.6); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(229, 169, 60, 0); }
+        }
+
+        .qr-updated {
+            animation: qrPulse 0.4s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-black text-gray-100 font-sans min-h-full flex flex-col antialiased selection:bg-amber-500 selection:text-black">
+
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-neutral-800 bg-neutral-950/80 backdrop-blur sticky top-0 z-40 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-amber-500/10 rounded-lg text-amber-500 border border-amber-500/20">
+                    <i data-lucide="coffee" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-sm tracking-wider uppercase text-gray-200">Bitácora del Catador</h1>
+                    <p class="text-xs text-neutral-400">Generador de Ficha Técnica & Código QR</p>
+                </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="flex items-center gap-2">
+                <button id="btnReset" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-neutral-300 hover:text-white bg-neutral-900 hover:bg-neutral-800 border border-neutral-700/60 rounded-lg transition-colors">
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                    <span>Restablecer</span>
+                </button>
+                <button id="btnShare" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-black bg-amber-500 hover:bg-amber-400 font-semibold rounded-lg transition-colors shadow-lg shadow-amber-500/10">
+                    <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+                    <span>Copiar Enlace</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- LEFT COLUMN: Editor Form -->
+        <section class="lg:col-span-6 xl:col-span-7 space-y-6">
+            
+            <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 md:p-6 shadow-xl">
+                <div class="flex items-center justify-between mb-5 border-b border-neutral-800 pb-3">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-5 h-5 text-amber-500"></i>
+                        <h2 class="text-base font-semibold text-white">Editar Datos del Café</h2>
+                    </div>
+                    <span class="text-xs text-amber-500/80 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20 flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        Auto-sincronizado
+                    </span>
+                </div>
+
+                <form id="coffeeForm" class="space-y-4" onsubmit="event.preventDefault();">
+                    
+                    <!-- Header Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Variedad / Nombre</label>
+                            <input type="text" id="in_name" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="SL28">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Productor y Finca</label>
+                            <input type="text" id="in_producer" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="Wilmer Cuellar · Finca Las Brisas">
+                        </div>
+                    </div>
+
+                    <!-- Puntaje & Notas -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Puntaje SCA</label>
+                            <input type="text" id="in_score" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors font-mono" value="88,00">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Notas de Cata (Separadas por punto)</label>
+                            <input type="text" id="in_notes" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="Avinado • Mora • Nibs de Cacao">
+                        </div>
+                    </div>
+
+                    <div class="h-px bg-neutral-800/80 my-4"></div>
+
+                    <!-- Attribute Grid Editor -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Pair 1 -->
+                        <div>
+                            <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Proceso</label>
+                            <input type="text" id="in_proceso" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="Natural">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Rueda Principal</label>
+                            <input type="text" id="in_rueda_p" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="Ácido Fermentado">
+                        </div>
+
+                        <!-- Pair 2 -->
+                        <div>
+                            <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Rueda Secundaria</label>
+                            <input type="text" id="in_rueda_s" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="Alcohol Fermentado">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Residual</label>
+                            <input type="text" id="in_residual" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="Cacao">
+                        </div>
+
+                        <!-- Pair 3 -->
+                        <div>
+                            <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Sensación</label>
+                            <input type="text" id="in_sensacion" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="Sedosa">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Dulzor (Escala SCA 0-15)</label>
+                            <input type="text" id="in_dulzor" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="10 / 15 · Medio">
+                        </div>
+
+                        <!-- Pair 4 -->
+                        <div>
+                            <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Acidez (Escala SCA 0-15)</label>
+                            <input type="text" id="in_acidez" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="11 / 15 · Alta">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Intensidad</label>
+                            <input type="text" id="in_intensidad" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="11 / 15 · Alta">
+                        </div>
+
+                        <!-- Pair 5 -->
+                        <div>
+                            <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Origen</label>
+                            <input type="text" id="in_origen" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="Acevedo, Huila">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Altura</label>
+                            <input type="text" id="in_altura" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="1700 msnm">
+                        </div>
+
+                        <!-- Pair 6 -->
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1">Año de Tueste / Cosecha</label>
+                            <input type="text" id="in_tueste" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors" value="2026">
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Dynamic QR Code Card -->
+            <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 md:p-6 shadow-xl flex flex-col md:flex-row items-center gap-6">
+                <div id="qrContainerWrapper" class="p-3 bg-white rounded-xl shadow-inner shrink-0 transition-all duration-300">
+                    <div id="qrcode" class="w-32 h-32 flex items-center justify-center"></div>
+                </div>
+                <div class="space-y-2 text-center md:text-left flex-1">
+                    <div class="flex items-center justify-center md:justify-start gap-2 text-amber-500 font-medium text-sm">
+                        <i data-lucide="qr-code" class="w-4 h-4"></i>
+                        <span>Código QR Genético de Cata</span>
+                    </div>
+                    <p class="text-xs text-neutral-400 leading-relaxed">
+                        Este código QR se vuelve a generar instantáneamente cada vez que escribes o modificas cualquier valor del formulario. Codifica los parámetros en la URL para compartir exactamente este perfil de cata.
+                    </p>
+                    <div class="pt-2 flex items-center justify-center md:justify-start gap-2">
+                        <button id="btnDownloadQR" class="px-3 py-1.5 text-xs bg-neutral-800 hover:bg-neutral-700 text-white rounded-md border border-neutral-700 transition-colors flex items-center gap-1.5">
+                            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                            Guardar QR (PNG)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- RIGHT COLUMN: Real-Time Dark Mode Mobile Preview -->
+        <section class="lg:col-span-6 xl:col-span-5 flex justify-center sticky top-20">
+            
+            <!-- Mobile Frame -->
+            <div class="w-full max-w-[390px] bg-black rounded-[40px] p-3 border-4 border-neutral-800 shadow-2xl shadow-neutral-950/80 relative overflow-hidden flex flex-col min-h-[780px]">
+                
+                <!-- Speaker Notch / Dynamic Island placeholder -->
+                <div class="w-32 h-4 bg-neutral-900 rounded-full mx-auto mb-2 shrink-0 flex items-center justify-center gap-2">
+                    <div class="w-2 h-2 rounded-full bg-neutral-950"></div>
+                    <div class="w-3 h-1 bg-neutral-800 rounded-full"></div>
+                </div>
+
+                <!-- Screen Inner Content (Exact Dark Replica) -->
+                <div class="flex-1 bg-[#0b0b0d] text-white rounded-[30px] p-5 flex flex-col justify-between overflow-y-auto relative font-sans border border-neutral-900/60">
+                    
+                    <div class="space-y-5">
+                        
+                        <!-- Header Status Bar Replica -->
+                        <div class="flex items-center justify-between text-[11px] text-neutral-400 font-mono tracking-wider">
+                            <span>9:53</span>
+                            <span class="font-semibold text-neutral-300">BITÁCORA DEL CATADOR</span>
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="wifi" class="w-3 h-3"></i>
+                                <i data-lucide="battery" class="w-3 h-3"></i>
+                            </div>
+                        </div>
+
+                        <!-- Title & Producer -->
+                        <div class="pt-2">
+                            <h2 id="view_name" class="text-4xl font-extrabold tracking-tight text-white font-sans">SL28</h2>
+                            <p id="view_producer" class="text-xs text-neutral-400 mt-1 font-medium">Wilmer Cuellar · Finca Las Brisas</p>
+                        </div>
+
+                        <!-- Divider line -->
+                        <div class="h-px bg-neutral-900 w-full"></div>
+
+                        <!-- Big SCA Score -->
+                        <div class="space-y-1">
+                            <div class="flex items-baseline gap-3">
+                                <span id="view_score" class="text-5xl font-black tracking-tight text-white font-mono">88,00</span>
+                                <span class="text-[10px] tracking-widest text-neutral-400 font-bold uppercase">PUNTAJE SCA</span>
+                            </div>
+                            <p class="text-xs text-neutral-400">Excelente · 85 puntos o más en la escala SCA</p>
+                        </div>
+
+                        <!-- Divider line -->
+                        <div class="h-px bg-neutral-900 w-full"></div>
+
+                        <!-- Tasting Notes -->
+                        <div>
+                            <h3 id="view_notes" class="text-lg font-bold text-white tracking-wide">Avinado • Mora • Nibs de Cacao</h3>
+                        </div>
+
+                        <!-- 2-Column Attributes Grid -->
+                        <div class="grid grid-cols-2 gap-y-4 gap-x-3 text-xs pt-1">
+                            
+                            <!-- Row 1 -->
+                            <div>
+                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">PROCESO</span>
+                                <p id="view_proceso" class="text-white font-mono text-sm font-normal">Natural</p>
+                            </div>
+                            <div>
+                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">RUEDA · PRINCIPAL</span>
+                                <p id="view_rueda_p" class="text-white font-mono text-sm font-normal">Ácido Fermentado</p>
+                            </div>
+
+                            <!-- Row 2 -->
+                            <div>
+                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">RUEDA · SECUNDARIA</span>
+                                <p id="view_rueda_s" class="text-white font-mono text-sm font-normal">Alcohol Fermentado</p>
+                            </div>
+                            <div>
+                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">RESIDUAL</span>
+                                <p id="view_residual" class="text-white font-mono text-sm font-normal">Cacao</p>
+                            </div>
+
+                            <!-- Row 3 -->
+                            <div>
+                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">SENSACIÓN</span>
+                                <p id="view_sensacion" class="text-white font-mono text-sm font-normal">Sedosa</p>
+                            </div>
+                            <div>
+                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">DULZOR</span>
+                                <p id="view_dulzor" class="text-white font-mono text-sm font-normal">10 / 15 · Medio</p>
+                            </div>
+
+                            <!-- Row 4 -->
+                            <div>
+                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">ACIDEZ</span>
+                                <p id="view_acidez" class="text-white font-mono text-sm font-normal">11 / 15 · Alta</p>
+                            </div>
+                            <div>
+                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">INTENSIDAD</span>
+                                <p id="view_intensidad" class="text-white font-mono text-sm font-normal">11 / 15 · Alta</p>
+                            </div>
+
+                            <!-- Row 5 -->
+                            <div>
+                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">ORIGEN</span>
+                                <p id="view_origen" class="text-white font-mono text-sm font-normal">Acevedo, Huila</p>
+                            </div>
+                            <div>
+                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">ALTURA</span>
+                                <p id="view_altura" class="text-white font-mono text-sm font-normal">1700 msnm</p>
+                            </div>
+
+                            <!-- Row 6 -->
+                            <div class="col-span-2">
+                                <span class="block text-[9px] tracking-widest text-neutral-500 font-bold uppercase mb-0.5">TUESTE</span>
+                                <p id="view_tueste" class="text-white font-mono text-sm font-normal">2026</p>
+                            </div>
+
+                        </div>
+
+                        <!-- Disclaimer Text -->
+                        <div class="pt-2">
+                            <p class="text-[10px] text-neutral-500 leading-relaxed">
+                                Dulzor, acidez e intensidad se miden de 0 a 15 en el formulario SCA. La intensidad describe el café; no mide su calidad.
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <!-- Bottom Floating Bar Replica -->
+                    <div class="mt-6 pt-3 border-t border-neutral-900 flex flex-col gap-3">
+                        <div class="flex items-center justify-between text-[10px] text-neutral-500 tracking-wider font-semibold">
+                            <span>FORMULARIO DE CATA SCA</span>
+                            <div class="flex items-center gap-1 text-emerald-400 font-normal">
+                                <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+                                <span>WhatsApp</span>
+                            </div>
+                        </div>
+
+                        <div class="relative flex items-center">
+                            <input type="text" placeholder="Agrega un comentario..." class="w-full bg-neutral-900/90 border border-neutral-800 rounded-full px-4 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-700" readonly>
+                            <button class="absolute right-2 p-1 bg-neutral-800 rounded-full text-neutral-400 hover:text-white">
+                                <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-amber-500 text-black font-semibold text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+        <span id="toastMsg">Enlace copiado al portapapeles</span>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // State Keys corresponding to inputs and view elements
+        const fields = [
+            'name', 'producer', 'score', 'notes',
+            'proceso', 'rueda_p', 'rueda_s', 'residual',
+            'sensacion', 'dulzor', 'acidez', 'intensidad',
+            'origen', 'altura', 'tueste'
+        ];
+
+        let qrCodeObj = null;
+
+        // Initialize Lucide Icons
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            initQR();
+            loadStateFromURL();
+            bindEvents();
+        });
+
+        // Initialize QRCode library instance
+        function initQR() {
+            const qrElement = document.getElementById("qrcode");
+            qrElement.innerHTML = "";
+            qrCodeObj = new QRCode(qrElement, {
+                text: window.location.href,
+                width: 128,
+                height: 128,
+                colorDark: "#0e0e10",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        }
+
+        // Read form inputs and sync to Mobile UI Preview
+        function syncPreview() {
+            const data = {};
+
+            fields.forEach(field => {
+                const inputVal = document.getElementById(`in_${field}`).value;
+                const viewElem = document.getElementById(`view_${field}`);
+                
+                if (viewElem) {
+                    viewElem.textContent = inputVal || '—';
+                }
+                data[field] = inputVal;
+            });
+
+            // Update URL parameters dynamically without reloading page
+            updateURLParams(data);
+
+            // Trigger QR update
+            updateQRCode();
+        }
+
+        // Update URL search parameters
+        function updateURLParams(data) {
+            const params = new URLSearchParams();
+            Object.keys(data).forEach(key => {
+                if (data[key]) {
+                    params.set(key, data[key]);
+                }
+            });
+            const newURL = `${window.location.pathname}?${params.toString()}`;
+            window.history.replaceState({}, '', newURL);
+        }
+
+        // Update QR Code graphic and trigger animation
+        function updateQRCode() {
+            if (!qrCodeObj) return;
+
+            const currentURL = window.location.href;
+            qrCodeObj.clear();
+            qrCodeObj.makeCode(currentURL);
+
+            // Animate QR container to notify visual update
+            const wrapper = document.getElementById('qrContainerWrapper');
+            wrapper.classList.remove('qr-updated');
+            void wrapper.offsetWidth; // Trigger reflow
+            wrapper.classList.add('qr-updated');
+        }
+
+        // Load parameters from URL if present
+        function loadStateFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            let hasParams = false;
+
+            fields.forEach(field => {
+                if (params.has(field)) {
+                    hasParams = true;
+                    const val = params.get(field);
+                    const inputElem = document.getElementById(`in_${field}`);
+                    if (inputElem) {
+                        inputElem.value = val;
+                    }
+                }
+            });
+
+            // Initial Sync
+            syncPreview();
+        }
+
+        // Attach input listeners
+        function bindEvents() {
+            fields.forEach(field => {
+                const inputElem = document.getElementById(`in_${field}`);
+                if (inputElem) {
+                    inputElem.addEventListener('input', syncPreview);
+                }
+            });
+
+            // Reset Button
+            document.getElementById('btnReset').addEventListener('click', () => {
+                const defaultValues = {
+                    name: 'SL28',
+                    producer: 'Wilmer Cuellar · Finca Las Brisas',
+                    score: '88,00',
+                    notes: 'Avinado • Mora • Nibs de Cacao',
+                    proceso: 'Natural',
+                    rueda_p: 'Ácido Fermentado',
+                    rueda_s: 'Alcohol Fermentado',
+                    residual: 'Cacao',
+                    sensacion: 'Sedosa',
+                    dulzor: '10 / 15 · Medio',
+                    acidez: '11 / 15 · Alta',
+                    intensidad: '11 / 15 · Alta',
+                    origen: 'Acevedo, Huila',
+                    altura: '1700 msnm',
+                    tueste: '2026'
+                };
+
+                Object.keys(defaultValues).forEach(key => {
+                    const el = document.getElementById(`in_${key}`);
+                    if (el) el.value = defaultValues[key];
+                });
+
+                syncPreview();
+                showToast('Valores restablecidos por defecto');
+            });
+
+            // Share / Copy Link Button
+            document.getElementById('btnShare').addEventListener('click', () => {
+                const dummy = document.createElement('input');
+                document.body.appendChild(dummy);
+                dummy.value = window.location.href;
+                dummy.select();
+                document.execCommand('copy');
+                document.body.removeChild(dummy);
+
+                showToast('¡Enlace con esta ficha copiado!');
+            });
+
+            // Download QR code image
+            document.getElementById('btnDownloadQR').addEventListener('click', () => {
+                const qrImage = document.querySelector('#qrcode img');
+                const canvas = document.querySelector('#qrcode canvas');
+                
+                let imageSrc = '';
+                if (qrImage && qrImage.src) {
+                    imageSrc = qrImage.src;
+                } else if (canvas) {
+                    imageSrc = canvas.toDataURL("image/png");
+                }
+
+                if (imageSrc) {
+                    const downloadLink = document.createElement("a");
+                    const coffeeName = document.getElementById('in_name').value || 'cafe';
+                    downloadLink.href = imageSrc;
+                    downloadLink.download = `QR_Cata_${coffeeName.replace(/\s+/g, '_')}.png`;
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                    showToast('Código QR descargado');
+                }
+            });
+        }
+
+        // Helper Toast Notification
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            toastMsg.textContent = msg;
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
